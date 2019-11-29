@@ -1,0 +1,22 @@
+version: "3.6"
+
+services:
+  http-checker:
+    depends_on:
+      - postgres
+    build:
+      context: .
+    environment:
+      DB_DSN: "user=checker password=checker host=postgres port=5432 dbname=checker sslmode=disable"
+      CRON_STRING: "*/10 * * * * *"
+
+  postgres:
+    image: postgres
+    ports:
+      - 4452:5432
+    volumes:
+      - ./initial.sql:/docker-entrypoint-initdb.d/initial.sql
+    environment:
+      POSTGRES_DB: "checker"
+      POSTGRES_USER: "checker"
+      POSTGRES_PASSWORD: "checker"
