@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+
 	"github.com/nalcheg/http-checker/types"
 )
 

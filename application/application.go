@@ -6,19 +6,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nalcheg/http-checker/repository"
-	"github.com/nalcheg/http-checker/types"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/atomic"
+
+	"github.com/nalcheg/http-checker/repository"
+	"github.com/nalcheg/http-checker/types"
 )
 
 type Application struct {
 	atomic.Bool
 
-	repo  repository.RepositoryInterface
-	hosts []string
-	chIn  chan request
-	chOut chan types.Result
+	repo   repository.RepositoryInterface
+	hosts  []string
+	chIn   chan request
+	chOut  chan types.Result
+	chStop chan int8
 }
 
 type request struct {
@@ -31,8 +33,10 @@ func NewApplication(repo repository.RepositoryInterface, wc int64) (*Application
 
 	chIn := make(chan request)
 	chOut := make(chan types.Result)
+	chStop := make(chan int8)
 	app.chIn = chIn
 	app.chOut = chOut
+	app.chStop = chStop
 
 	app.repo = repo
 
@@ -46,6 +50,7 @@ func NewApplication(repo repository.RepositoryInterface, wc int64) (*Application
 	if err != nil {
 		return nil, err
 	}
+
 	app.hosts = hosts
 
 	return &app, nil
@@ -114,9 +119,12 @@ func (a *Application) Start(cronString string) error {
 	}
 	c.Start()
 
-	go func() {
+	func() {
 		for {
 			select {
+			case _ = <-a.chStop:
+				log.Print("exiting")
+				break
 			case r := <-a.chOut:
 				if err := a.repo.SaveCheck(r); err != nil {
 					log.Print(err)
