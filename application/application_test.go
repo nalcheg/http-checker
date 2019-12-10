@@ -58,7 +58,7 @@ func TestResponseCode(t *testing.T) {
 
 	go func() {
 		if err := app.Start("* * * * * *"); err != nil {
-			t.Fatal(err)
+			log.Fatal(err)
 		}
 	}()
 

@@ -35,7 +35,7 @@ func (r *Repository) GetHosts() ([]string, error) {
 		return nil, err
 	}
 
-	for rows.Next() == true {
+	for rows.Next() {
 		val, err := rows.Values()
 		if err != nil {
 			return nil, err

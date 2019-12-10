@@ -57,7 +57,7 @@ func NewApplication(repo repository.RepositoryInterface, wc int64) (*Application
 }
 
 func (a *Application) check() {
-	if a.Load() == true {
+	if a.Load() {
 		log.Print("ALARM !!! prevous check() is running, needed to figure out with this") // TODO maybe use log.Fatal
 		return
 	}
@@ -96,13 +96,10 @@ func (a *Application) worker(chIn chan request, chOut chan types.Result) {
 		return r
 	}
 
-	for {
-		select {
-		case request := <-chIn:
-			r := checkHost(request.host)
-			r.Wg = request.wg
-			chOut <- r
-		}
+	for request := range chIn {
+		r := checkHost(request.host)
+		r.Wg = request.wg
+		chOut <- r
 	}
 }
 
@@ -122,7 +119,7 @@ func (a *Application) Start(cronString string) error {
 	func() {
 		for {
 			select {
-			case _ = <-a.chStop:
+			case <-a.chStop:
 				log.Print("exiting")
 				break
 			case r := <-a.chOut:
